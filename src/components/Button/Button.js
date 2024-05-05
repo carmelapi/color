@@ -1,40 +1,52 @@
-import { useState } from "react";
+import React, { useContext, useState } from "react";
+import { Context } from "../../ContextProvider";
+import chroma from "chroma-js";
 import "./Button.css";
-
 function Button() {
-	const [buttonText, setButtonText] = useState("START");
+  const [buttonText, setButtonText] = useState("START");
+  const [currentSection, setCurrentSection] = useState(1);
 
+  const { mixColors, setMixColors, setColor, resetToggles } =
+    useContext(Context);
 
-	function handleOnClick() {
-		const section1Position = document.getElementById("section1").getBoundingClientRect();
-		const section2Position = document.getElementById("section2").getBoundingClientRect();
-		const section3Position = document.getElementById("section3").getBoundingClientRect();
+  const handleOnClick = () => {
+    const header = document.querySelector(".header");
+    // Scroll to the next section
+    setCurrentSection((prevSection) => {
+      const nextSection = (prevSection % 3) + 1;
+      /* Cyclical section index is used when you want to
+  cycle through a set of elements or sections in a loop.*/
+      const section = document.getElementById(`section${nextSection}`);
 
-		let scrollDistance = document.documentElement.clientHeight;
-		
-		// button text = START
-		// page go to 2
-		if (section1Position.top === 0) {
-			window.scrollBy(0, scrollDistance);
-			setButtonText('MIX')
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+        if (nextSection === 1) {
+          setButtonText("START");
+          setColor("#FFFFFF");
+          resetToggles();
+          setTimeout(() => {
+            setMixColors({ one: "#000000", two: "#FFFFFF" });
+          }, 1000);
+          return nextSection;
+        } else if (nextSection === 2) {
+          setButtonText("MIX");
+          header.style.top = `-${header.getBoundingClientRect().height}px`;
+        } else if (nextSection === 3) {
+          setButtonText("RESTART");
+          header.style.top = "0px";
+          setColor(chroma.mix(mixColors.one, mixColors.two).hex());
+        }
+        return nextSection;
+      }
+      return currentSection; // Return the current section if the next section doesn't exist
+    });
+  };
 
-			// page go to 3
-		} else if (section2Position.top === 0) {
-			window.scrollBy(0, scrollDistance);
-			setButtonText('RESTART')
-
-			// page go to 1
-		} else if (section3Position.top === 0) {
-			window.scrollTo(0, 0);
-			setButtonText('START')
-		}
-	}
-
-	return (
-		<button onClick={handleOnClick} className="main-button">
-			{buttonText}
-		</button>
-	);
+  return (
+    <button onClick={handleOnClick} className="main-button">
+      {buttonText}
+    </button>
+  );
 }
 
 export default Button;
